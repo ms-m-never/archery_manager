@@ -1,0 +1,33 @@
+﻿<Page
+    x:Class="Archery_Manager.NewScore"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Archery_Manager"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <StackPanel x:Name="data">
+            <TextBlock x:Name="Titre" HorizontalAlignment="Center" Text="Nouveau Score" FontSize="20" Margin="0,10,0,10"/>
+                <TextBox x:Name="Date" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="date" VerticalAlignment="Top" />
+            <ComboBox x:Name="Distance"  Margin="0,10,0,10" HorizontalAlignment="Stretch"  PlaceholderText="Distance" VerticalAlignment="top">
+            <x:String>FITA</x:String>
+            <x:String>Federal</x:String>
+            <x:String>Salle</x:String>
+            <x:String>Campagne</x:String>
+        </ComboBox>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <RadioButton x:Name="type" Content="Entraiement" HorizontalAlignment="Center" Grid.Column="0" Margin="0,10,0,10" Checked="train_Checked" />
+                <RadioButton x:Name="type2" Content="Compétition" HorizontalAlignment="Center" Grid.Column="1" Margin="0,10,0,10" Checked="Comp_checked" />
+            </Grid>
+            <TextBox x:Name="Commentaire" Margin="0,10,0,10" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="Commentaire" VerticalAlignment="Top" Height="100" GotFocus="com_focus" LostFocus="com_lostFoc"/>
+            <Button x:Name="GO" Content="Commencer" HorizontalAlignment="Stretch" Margin="0,100,0,0" VerticalAlignment="Stretch" Click="Score_click"/>
+            <Button x:Name="Annuler" Content="Annuler" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch" Click="click_annule" />
+        </StackPanel>
+    </Grid>
+</Page>
