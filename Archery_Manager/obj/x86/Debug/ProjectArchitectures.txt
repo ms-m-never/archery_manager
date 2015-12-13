@@ -1,1 +1,1 @@
-E:\Dev\Archery_Manager\Archery_Manager\Archery_Manager.csproj;x86
+C:\Users\Marc\Documents\Visual Studio 2015\Projects\archery_manager\archery_manager\Archery_Manager\Archery_Manager.csproj;x86

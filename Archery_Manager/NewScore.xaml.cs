@@ -52,7 +52,7 @@ namespace Archery_Manager
 
         private void click_annule(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(MainPage));
+            Frame.Navigate(typeof(View.MainPage));
         }
 
         private void train_Checked(object sender, RoutedEventArgs e)

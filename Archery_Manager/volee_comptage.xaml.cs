@@ -53,7 +53,7 @@ namespace Archery_Manager
 
         private void back_click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(MainPage));
+            Frame.Navigate(typeof(View.MainPage));
         }
 
         private async void calculeTotal(int N, double abs, double ord)

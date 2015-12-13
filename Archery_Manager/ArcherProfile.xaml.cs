@@ -49,7 +49,7 @@ namespace Archery_Manager
 
         private void BackClick(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(MainPage));
+            Frame.Navigate(typeof(View.MainPage));
         }
 
         private void ModifierClick(object sender, RoutedEventArgs e)
@@ -59,9 +59,9 @@ namespace Archery_Manager
 
         private void SuprimeClick(object sender, RoutedEventArgs e)
         {
-            ApplicationHelper.MyClub.Donnees.Remove((objets.Archer)this.DataContext);
+            ApplicationHelper.MyClub.Archers.Remove((objets.Archer)this.DataContext);
             ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
-            Frame.Navigate(typeof(MainPage));
+            Frame.Navigate(typeof(View.MainPage));
         }
 
         private void ScoreClick(object sender, ItemClickEventArgs e)

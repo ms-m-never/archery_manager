@@ -10,9 +10,9 @@ namespace Archery_Manager.objets
     {
         public Club()
         {
-            Donnees = new List<Archer>();
+            Archers = new List<Archer>();
         }
-        public List<Archer> Donnees
+        public List<Archer> Archers
         {            
             get;
             set;
