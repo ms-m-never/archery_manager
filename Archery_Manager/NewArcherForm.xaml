@@ -35,9 +35,13 @@
             </ComboBox>
             <RadioButton x:Name="Arme" Content="Classique" HorizontalAlignment="Center" VerticalAlignment="Stretch" FontSize="20" Checked="ClassiqueChecked" />
             <RadioButton x:Name="Arme2" Content="Arc à Poulies" HorizontalAlignment="Center" VerticalAlignment="Stretch" FontSize="20" Checked="PoulieChecked" />
-            <Image x:Name="imageArcher" Height="200" Margin="86,60,86,00" Source="Resources/Drawable/cible.png"/>
+            <Image x:Name="imageArcher" Height="200" Margin="86,60,86,00" Source="Resources/Drawable/cible.png" Visibility="Collapsed"/>
+            <Button Height="200" HorizontalAlignment="Stretch" FontSize="26.667">
+                <TextBlock FontFamily="Segoe UI Symbol" FontStretch="Expanded" Text="&#xE13D;" />
+            </Button>
+            <CaptureElement Name="PreviewControl" Stretch="Uniform" Height="200"/>
             <Button x:Name="button" Content="Modifier la photo" Margin="86,0,86,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="PhotoChose"/>
-            
+            <Button x:Name="PhotoButton">0</Button>
         </StackPanel>
     </Grid>
 </Page>
