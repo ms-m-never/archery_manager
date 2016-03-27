@@ -36,7 +36,7 @@ namespace Archery_Manager
 
         private void trois_tapped(object sender, TappedRoutedEventArgs e)
         {
-            ApplicationHelper.MessageValid(" 3 ?");
+            //ApplicationHelper.MessageValid(" 3 ?");
             Point fleche = e.GetPosition(Cible);
             double abs = fleche.X;
             double ord = fleche.Y;

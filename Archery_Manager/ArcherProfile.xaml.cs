@@ -1,4 +1,5 @@
-﻿using Windows.UI.Xaml;
+﻿using Archery_Manager.objets;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 
@@ -24,11 +25,11 @@ namespace Archery_Manager
             if (e.Parameter is objets.Archer)
             {
                 objets.Archer Tireur = e.Parameter as objets.Archer;
-                ArcherInfo.Text = Tireur.name+"\n"+Tireur.cat+"\n"+Tireur.arme + "\n";
+                ArcherInfo.Text = Tireur.Nom+"\n"+Tireur.Categorie+"\n"+Tireur.Arme + "\n";
 
                 this.DataContext = Tireur;
 
-                if (Tireur.perf == null){
+                if (Tireur.Perf == null){
                     
                 }else{
 
@@ -59,8 +60,8 @@ namespace Archery_Manager
 
         private void SuprimeClick(object sender, RoutedEventArgs e)
         {
-            ApplicationHelper.MyClub.Archers.Remove((objets.Archer)this.DataContext);
-            ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
+            RessourceManager.Instance.Club.RemoveArcher(this.DataContext as Archer);
+            ApplicationHelper.SerializeXML("Data", RessourceManager.Instance.Club);
             Frame.Navigate(typeof(View.MainPage));
         }
 
@@ -72,14 +73,14 @@ namespace Archery_Manager
 
         private void SupScore(object sender, RoutedEventArgs e)
         {
-            objets.Archer tireur = this.DataContext as objets.Archer;
+            objets.Archer tireur = this.DataContext as Archer;
             if (tireur != null)
             {
-                objets.Score score = ((Button)sender).DataContext as objets.Score;
+                Score score = ((Button)sender).DataContext as Score;
                 if (score != null)
-                    tireur.perf.Remove(score);
+                    tireur.Perf.Remove(score);
 
-                ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
+                ApplicationHelper.SerializeXML("Data", RessourceManager.Instance.Club);
                 Frame.Navigate(typeof(ArcherProfile),tireur);
             }
             // objets.Archer Tireur = this.DataContext as objets.Archer;

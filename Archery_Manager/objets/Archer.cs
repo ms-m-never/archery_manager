@@ -8,68 +8,57 @@ namespace Archery_Manager.objets
 {
     public class Archer
     {
-        public Archer(string name, string cat, string arme, string photo)
+        public Archer(string nom, string categorie, string arme, string photo)
         {
-            this.name = name;
-            this.cat = cat;
-            this.arme = arme;
-            this.photo = photo;
+            this.Nom = nom;
+            this.Categorie = categorie;
+            this.Arme = arme;
+            this.Photo = photo;
 
         }
         public Archer()
         {
 
         }
-        public string name
+        public string Nom
         {
             get;
             set;
         }
-        public string cat
+        public string Categorie
         {
             get;
             set;
         }
-        //rajouter public pour pouvoir serializer, trouver comment enregistrer
-        /* Windows.UI.Xaml.Media.ImageSource photo
-         {
-             get;
-             set;
-         }*/
-
-       public string photo
+       public string Photo
         {
             get;
             set;
         }
-        public string arme
+        public string Arme
         {
             get;
             set;
         }
-        public List<Score> perf
+        public List<Score> Perf
         {
             get;
             set;
         }
-
-        public static void Add(Archer tireur, Score point) {
-            if (tireur.perf == null)
+        public void Add(Score point) {
+            if (this.Perf == null)
             {
 
-                tireur.perf = new List<Score> { point };
+                this.Perf = new List<Score> { point };
             }
             else {
-                tireur.perf.Add(point);
+                this.Perf.Add(point);
             }
-
-
         }
-
-        public static void Remove(Archer tireur, Score point)
+        public void RemovePoint(Score point)
         {
 
-            tireur.perf.Remove(point);
+            this.Perf.Remove(point);
             
         }
     }

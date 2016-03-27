@@ -104,13 +104,16 @@
     <Compile Include="ArcherProfile.xaml.cs">
       <DependentUpon>ArcherProfile.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Bases\Interfaces\INavigable.cs" />
+    <Compile Include="Bases\MvvmPage.cs" />
     <Compile Include="Bases\NotifyPropertyChanged.cs" />
     <Compile Include="Bases\RelayCommand.cs" />
     <Compile Include="NewScore.xaml.cs">
       <DependentUpon>NewScore.xaml</DependentUpon>
     </Compile>
     <Compile Include="ApplicationHelper.cs" />
-    <Compile Include="NewArcherForm.xaml.cs">
+    <Compile Include="ViewModel\NewArcherViewModel.cs" />
+    <Compile Include="View\NewArcherForm.xaml.cs">
       <DependentUpon>NewArcherForm.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\MainPage.xaml.cs">
@@ -155,7 +158,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="NewArcherForm.xaml">
+    <Page Include="View\NewArcherForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -179,6 +182,11 @@
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties project_1json__JSONSchema="" />
+    </VisualStudio>
+  </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Archery_Manager.objets;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace Archery_Manager
             this.InitializeComponent();
             DateTime dateScore = DateTime.Today;
             Date.Text = dateScore.ToString("D");
-
+            
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -45,6 +46,7 @@ namespace Archery_Manager
                 this.DataContext = Tireur;
 
                 base.OnNavigatedTo(e);
+
             }
         }
 
@@ -80,11 +82,11 @@ namespace Archery_Manager
 
                 //ajouter aussi le commentaire si non null
                 if (Commentaire.Text == "Commentaire") {
-                    objets.Score NewScore = new objets.Score(dateScore, ScoreType, DistanceScore);
+                    Score NewScore = new objets.Score(dateScore, ScoreType, DistanceScore);
 
-                    objets.Archer.Add(this.DataContext as objets.Archer, NewScore);
+                    ((Archer)DataContext).Perf.Add(NewScore);
 
-                    ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
+                    ApplicationHelper.SerializeXML("Data", RessourceManager.Instance.Club);
 
                     Frame.Navigate(typeof(volee_comptage), this.DataContext);
 
@@ -92,11 +94,11 @@ namespace Archery_Manager
                 }
                 else
                 {
-                    objets.Score NewScore = new objets.Score(dateScore, ScoreType, DistanceScore, Commentaire.Text);
+                    Score NewScore = new Score(dateScore, ScoreType, DistanceScore, Commentaire.Text);
 
-                    objets.Archer.Add(this.DataContext as objets.Archer, NewScore);  
+                    ((Archer)DataContext).Add(NewScore);  
 
-                    ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
+                    ApplicationHelper.SerializeXML("Data", RessourceManager.Instance.Club);
                     Frame.Navigate(typeof(volee_comptage), this.DataContext);
 
                 }

@@ -1,25 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
+using Archery_Manager.objets;
 
 namespace Archery_Manager.ViewModel
 {
     public class MainViewModel : Bases.NotifyPropertyChanged
     {
         public ICommand AddCmd { get; private set; }
-
-        private objets.Club _Club;
-        public objets.Club Club {
-            get { return _Club; }
-            set { if (value != _Club) { _Club = value; OnPropertyChanged(); } }
+        
+        public Club Club {
+            get { return RessourceManager.Instance.Club; }
         }
 
         public MainViewModel()
         {
-            this.AddCmd = new Bases.RelayCommand((o) => { ApplicationHelper.RootFrame.Navigate(typeof(NewArcherForm)); });
+            this.AddCmd = new Bases.RelayCommand((o) => { ApplicationHelper.RootFrame.Navigate(typeof(View.NewArcherForm)); });
             LoadData();
         }
         private void LoadData()
@@ -27,22 +23,13 @@ namespace Archery_Manager.ViewModel
             var Folder = Windows.Storage.ApplicationData.Current.LocalFolder;
             try
             {
-                ApplicationHelper.MyClub = ApplicationHelper.DeSerializeXML<objets.Club>("Data");
-                List<objets.Archer> truc;
-                if (ApplicationHelper.MyClub != null)
-                {
-                    truc = ApplicationHelper.MyClub.Archers;
-                }
-                else
-                {
-                    ApplicationHelper.MyClub = new objets.Club();
-                }
+                RessourceManager.Instance.Club = ApplicationHelper.DeSerializeXML<Club>("Data");
+
             }
             catch (Exception)
             {
 
             }
-            Club = ApplicationHelper.MyClub;
         }
         public void ShowCmd(object sender, object parameter)
         {

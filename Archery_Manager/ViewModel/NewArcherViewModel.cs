@@ -1,71 +1,144 @@
-﻿using System;
-using Windows.Foundation;
+﻿using Archery_Manager.Bases;
+using System.Windows.Input;
+using Archery_Manager.objets;
 using Windows.UI.Xaml;
+using Windows.Media;
+using Windows.ApplicationModel;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 using Windows.Media.Capture;
-using Windows.Storage;
-using Windows.Storage.Streams;
-using Windows.Graphics.Imaging;
-using Windows.UI.Xaml.Media.Imaging;
-using Windows.Storage.Pickers;
+using Windows.System.Display;
+using Windows.Graphics.Display;
+using Windows.Devices.Sensors;
+using System;
+using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using System.Linq;
-using Windows.System.Display;
-using System.Threading.Tasks;
-using Windows.Graphics.Display;
-using Windows.Storage.FileProperties;
+using Windows.Storage.Streams;
 using Windows.Media.MediaProperties;
 using System.Diagnostics;
-using Windows.Devices.Sensors;
-using Windows.UI.Core;
-using Windows.ApplicationModel;
-using Windows.UI.Xaml.Navigation;
-using Windows.Media;
+using Windows.Storage.FileProperties;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
 using Windows.UI.Xaml.Media;
+using Windows.Foundation;
 
-//https://msdn.microsoft.com/fr-fr/library/windows/apps/mt243896.aspx
-// Pour plus d'informations sur le modèle d'élément Page vierge, voir la page http://go.microsoft.com/fwlink/?LinkId=234238
-
-namespace Archery_Manager
+namespace Archery_Manager.ViewModel
 {
-    /// <summary>
-    /// Une page vide peut être utilisée seule ou constituer une page de destination au sein d'un frame.
-    /// </summary>
-    public sealed partial class NewArcherForm : Page
+    public class NewArcherViewModel : NotifyPropertyChanged, Bases.Interfaces.INavigable
     {
-        string ArcherArme;
-        public string photoPath = "Resources/Drawable/cible.png";
+        public ICommand ValidateCmd { get; set; }
+        public ICommand CancelCmd { get; set; }
+        public ICommand StartMediaCmd { get; set; }
+        public ICommand TakePictureCmd { get; set; }
 
-        public NewArcherForm()
+        private Archer archer;
+        public Archer Archer
         {
-            this.InitializeComponent();
+            get { return archer; }
+            set
+            {
+                if (archer != value)
+                {
+                    archer = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Constructeur
+        /// </summary>
+        public NewArcherViewModel(CaptureElement c)
+        {
+            ce = c;
+            Archer = new Archer();
+            StartMediaCmd = new RelayCommand(async (o) => { await InitializeCameraAsync(); });
+            CancelCmd = new RelayCommand((o) => { ApplicationHelper.RootFrame.Navigate(typeof(View.MainPage)); });
+            ValidateCmd = new RelayCommand(
+                (o) => {
+                    if (!string.IsNullOrEmpty(archer.Nom) && !string.IsNullOrEmpty(archer.Arme) && !string.IsNullOrEmpty(archer.Categorie))
+                    {
+                        RessourceManager.Instance.Club.Archers.Add(archer);
+                        ApplicationHelper.SerializeXML<Club>("Data", RessourceManager.Instance.Club);
+                    }
+                    else
+                    {
+
+                    }
+                });
+            TakePictureCmd = new RelayCommand(
+                async (o) =>
+                {
+                    try {
+                        string temp = await TakePhotoAsync();
+                        Archer.Photo = temp;
+                        await StopPreviewAsync();
+                    }catch(Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
+                });
+        }
+
+        public void Activate(object parameter)
+        {
             Application.Current.Suspending += Application_Suspending;
             Application.Current.Resuming += Application_Resuming;
         }
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+
+        public void Deactivate(object parameter)
         {
-            RegisterOrientationEventHandlers();
-
-            _systemMediaControls.PropertyChanged += SystemMediaControls_PropertyChanged;
-
-            await InitializeCameraAsync();
-        }
-        protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
-        {
-            UnregisterOrientationEventHandlers();
-
-            _systemMediaControls.PropertyChanged -= SystemMediaControls_PropertyChanged;
-
-            await CleanupCameraAsync();
 
         }
+
+        #region Camera
+        // Resources/Drawable/cible.png
+        public string photoPath = "";
+        public CaptureElement ce;
+        private MediaCapture mediaCapture;
+        public MediaCapture MediaCapture
+        {
+            get { return mediaCapture; }
+            set {
+                if (mediaCapture != value)
+                {
+                    mediaCapture = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public FlowDirection PreviewControlFlowDirection;
+        private bool IsInitialized { get; set; }
+        private bool isPreviewing;
+        public bool IsPreviewing {
+            get { return isPreviewing; }
+            set
+            {
+                if (isPreviewing != value)
+                {
+                    isPreviewing = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private bool _externalCamera;
+        private bool _mirroringPreview;
+        private readonly DisplayRequest _displayRequest = new DisplayRequest();
+        private readonly DisplayInformation _displayInformation = DisplayInformation.GetForCurrentView();
+        private DisplayOrientations _displayOrientation = DisplayOrientations.Portrait;
+        private readonly SimpleOrientationSensor _orientationSensor = SimpleOrientationSensor.GetDefault();
+        private SimpleOrientation _deviceOrientation = SimpleOrientation.NotRotated;
+        private static readonly Guid RotationKey = new Guid("C380465D-2271-428C-9B83-ECEA3B4A85C1");
+
+         
         private readonly SystemMediaTransportControls _systemMediaControls = SystemMediaTransportControls.GetForCurrentView();
         private async void SystemMediaControls_PropertyChanged(SystemMediaTransportControls sender, SystemMediaTransportControlsPropertyChangedEventArgs args)
         {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            await Window.Current.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
             {
                 // Only handle this event if this page is currently being displayed
-                if (args.Property == SystemMediaTransportControlsProperty.SoundLevel && Frame.CurrentSourcePageType == typeof(View.MainPage))
+                if (args.Property == SystemMediaTransportControlsProperty.SoundLevel && ((Frame)Window.Current.Content).CurrentSourcePageType == typeof(View.NewArcherForm))
                 {
                     // Check to see if the app is being muted. If so, it is being minimized.
                     // Otherwise if it is not initialized, it is being brought into focus.
@@ -73,7 +146,7 @@ namespace Archery_Manager
                     {
                         await CleanupCameraAsync();
                     }
-                    else if (!_isInitialized)
+                    else if (!IsInitialized)
                     {
                         await InitializeCameraAsync();
                     }
@@ -84,7 +157,7 @@ namespace Archery_Manager
         private async void Application_Suspending(object sender, SuspendingEventArgs e)
         {
             // Handle global application events only if this page is active
-            if (Frame.CurrentSourcePageType == typeof(View.MainPage))
+            if (((Frame)Window.Current.Content).CurrentSourcePageType == typeof(View.NewArcherForm))
             {
                 var deferral = e.SuspendingOperation.GetDeferral();
 
@@ -100,7 +173,7 @@ namespace Archery_Manager
         private async void Application_Resuming(object sender, object o)
         {
             // Handle global application events only if this page is active
-            if (Frame.CurrentSourcePageType == typeof(View.MainPage))
+            if (((Frame)Window.Current.Content).CurrentSourcePageType == typeof(View.NewArcherForm))
             {
                 RegisterOrientationEventHandlers();
 
@@ -108,96 +181,6 @@ namespace Archery_Manager
 
                 await InitializeCameraAsync();
             }
-        }
-
-
-        private void NewArcherOk(object sender, RoutedEventArgs e)
-        {
-
-            if (name.Text.Trim() == string.Empty || name.Text == "Nom, Prénom, Surnom" || cat.SelectedItem == null)
-            {
-                // error.Text = "Remplissez tout les champs";
-                ApplicationHelper.Message("Remplissez tout les champs!");
-            }
-            else
-            {
-                string ArcherName = name.Text;
-                string ArcherCat = cat.SelectedItem.ToString();
-                objets.Archer Newbie = new objets.Archer(ArcherName, ArcherCat, ArcherArme, photoPath);
-
-                ApplicationHelper.MyClub.Archers.Add(Newbie);
-
-                ApplicationHelper.SerializeXML("Data", ApplicationHelper.MyClub);
-
-                Frame.Navigate(typeof(View.MainPage));
-            }
-        }
-
-        private void NewArcherNop(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(View.MainPage));
-        }
-
-        private void ClassiqueChecked(object sender, RoutedEventArgs e)
-        {
-            ArcherArme = "Classique";
-        }
-
-        private void PoulieChecked(object sender, RoutedEventArgs e)
-        {
-            ArcherArme = "Poulie";
-        }
-
-
-        private void name_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (name.Text == "Nom, Prénom, Surnom" && name.Focus(FocusState.Programmatic) == true)
-            {
-                name.Text = "";
-
-            }
-        }
-
-        private void name_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (name.Text == "") { name.Text = "Nom, Prénom, Surnom"; }
-        }
-
-        private MediaCapture _mediaCapture; //transformer en propriété
-        private bool _isInitialized;
-        private bool _isPreviewing;
-        private bool _externalCamera;
-        private bool _mirroringPreview;
-        private readonly DisplayRequest _displayRequest = new DisplayRequest();
-        private readonly DisplayInformation _displayInformation = DisplayInformation.GetForCurrentView();
-        private DisplayOrientations _displayOrientation = DisplayOrientations.Portrait;
-        private readonly SimpleOrientationSensor _orientationSensor = SimpleOrientationSensor.GetDefault();
-        private SimpleOrientation _deviceOrientation = SimpleOrientation.NotRotated;
-        private static readonly Guid RotationKey = new Guid("C380465D-2271-428C-9B83-ECEA3B4A85C1");
-
-        private async void PhotoChose(object sender, RoutedEventArgs e)
-        {
-            await TakePhotoAsync();
-
-            /*
-            CameraCaptureUI captureUI = new CameraCaptureUI();                                  //prise de la photo
-            captureUI.PhotoSettings.Format = CameraCaptureUIPhotoFormat.Jpeg;                   //format jpeg
-            captureUI.PhotoSettings.CroppedSizeInPixels = new Size(200, 200);                   //format carré 200x200
-            
-            StorageFile photo = await captureUI.CaptureFileAsync(CameraCaptureUIMode.Photo);    //capture de la photo
-           
-            if (photo != null)                                                                  //si photo ok
-            {
-                IRandomAccessStream stream = await photo.OpenAsync(FileAccessMode.Read);        //ouverture de la photo
-                BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);                
-                SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8,BitmapAlphaMode.Premultiplied);
-                               
-                SoftwareBitmapSource bitmapSource = new SoftwareBitmapSource();
-                await bitmapSource.SetBitmapAsync(softwareBitmap);
-                
-                imageArcher.Source = bitmapSource;
-                photoPath = photo.Path;
-            }*/
         }
         private void RegisterOrientationEventHandlers()
         {
@@ -233,7 +216,7 @@ namespace Archery_Manager
         {
             _displayOrientation = sender.CurrentOrientation;
 
-            if (_isPreviewing)
+            if (IsPreviewing)
             {
                 await SetPreviewRotationAsync();
             }
@@ -242,7 +225,7 @@ namespace Archery_Manager
 
         private async Task InitializeCameraAsync()
         {
-            if (_mediaCapture == null) // ???
+            if (MediaCapture == null) // ???
             {
                 // Get available devices for capturing pictures
                 var allVideoDevices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
@@ -262,7 +245,7 @@ namespace Archery_Manager
                 }
 
                 // Create MediaCapture and its settings
-                _mediaCapture = new MediaCapture();
+                MediaCapture = new MediaCapture();
 
                 // Register for a notification when video recording has reached the maximum time and when something goes wrong
                 //_mediaCapture.RecordLimitationExceeded += MediaCapture_RecordLimitationExceeded;
@@ -271,8 +254,8 @@ namespace Archery_Manager
                 // Initialize MediaCapture
                 try
                 {
-                    await _mediaCapture.InitializeAsync(mediaInitSettings);
-                    _isInitialized = true;
+                    await MediaCapture.InitializeAsync(mediaInitSettings);
+                    IsInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -284,7 +267,7 @@ namespace Archery_Manager
                 }
 
                 // If initialization succeeded, start the preview
-                if (_isInitialized)
+                if (IsInitialized)
                 {
                     // Figure out where the camera is located
                     if (cameraDevice.EnclosureLocation == null || cameraDevice.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Unknown)
@@ -313,14 +296,15 @@ namespace Archery_Manager
             _displayRequest.RequestActive();
 
             // Set the preview source in the UI and mirror it if necessary
-            PreviewControl.Source = _mediaCapture; //remplacer par propriété
-            PreviewControl.FlowDirection = _mirroringPreview ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-
+            //PreviewControl.Source = MediaCapture; //remplacer par propriété
+            ce.Source = MediaCapture;
+            //PreviewControl.FlowDirection = _mirroringPreview ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+            PreviewControlFlowDirection = _mirroringPreview ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
             // Start the preview
             try
             {
-                await _mediaCapture.StartPreviewAsync();
-                _isPreviewing = true;
+                await MediaCapture.StartPreviewAsync();
+                IsPreviewing = true;
             }
             catch (Exception ex)
             {
@@ -328,7 +312,7 @@ namespace Archery_Manager
             }
 
             // Initialize the preview to the current orientation
-            if (_isPreviewing)
+            if (IsPreviewing)
             {
                 await SetPreviewRotationAsync();
             }
@@ -351,9 +335,9 @@ namespace Archery_Manager
             }
 
             // Add rotation metadata to the preview stream to make sure the aspect ratio / dimensions match when rendering and getting preview frames
-            var props = _mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview);
+            var props = MediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview);
             props.Properties.Add(RotationKey, rotationDegrees);
-            await _mediaCapture.SetEncodingPropertiesAsync(MediaStreamType.VideoPreview, props, null);
+            await MediaCapture.SetEncodingPropertiesAsync(MediaStreamType.VideoPreview, props, null);
 
         }
         private static int ConvertDisplayOrientationToDegrees(DisplayOrientations orientation)
@@ -385,22 +369,24 @@ namespace Archery_Manager
                     return 0;
             }
         }
-        private async Task TakePhotoAsync()
+        private async Task<string> TakePhotoAsync()
         {
             var stream = new InMemoryRandomAccessStream();
 
             try
             {
                 Debug.WriteLine("Taking photo...");
-                await _mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
+                await MediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
                 Debug.WriteLine("Photo taken!");
 
                 var photoOrientation = ConvertOrientationToPhotoOrientation(GetCameraOrientation());
-                await ReencodeAndSavePhotoAsync(stream, "photo.jpg", photoOrientation);
+                string fileName = await ReencodeAndSavePhotoAsync(stream, @"Pictures\" + Guid.NewGuid().ToString() + ".jpg", photoOrientation);
+                return fileName;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Exception when taking a photo: {0}", ex.ToString());
+                return "";
             }
 
         }
@@ -442,14 +428,14 @@ namespace Archery_Manager
                     return PhotoOrientation.Normal;
             }
         }
-        private static async Task ReencodeAndSavePhotoAsync(IRandomAccessStream stream, string filename, PhotoOrientation photoOrientation)
+        private static async Task<string> ReencodeAndSavePhotoAsync(IRandomAccessStream stream, string filename, PhotoOrientation photoOrientation)
         {
             using (var inputStream = stream)
             {
                 var decoder = await BitmapDecoder.CreateAsync(inputStream);
 
-                var file = await KnownFolders.PicturesLibrary.CreateFileAsync(filename, CreationCollisionOption.GenerateUniqueName);
-
+                //var file = await KnownFolders.PicturesLibrary.CreateFileAsync(filename, CreationCollisionOption.GenerateUniqueName);
+                var file = await ApplicationHelper.LocalFolder.CreateFileAsync(filename, CreationCollisionOption.GenerateUniqueName);
                 using (var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite))
                 {
                     var encoder = await BitmapEncoder.CreateForTranscodingAsync(outputStream, decoder);
@@ -458,6 +444,7 @@ namespace Archery_Manager
 
                     await encoder.BitmapProperties.SetPropertiesAsync(properties);
                     await encoder.FlushAsync();
+                    return file.Path;
                 }
             }
         }
@@ -466,8 +453,8 @@ namespace Archery_Manager
             // Stop the preview
             try
             {
-                _isPreviewing = false;
-                await _mediaCapture.StopPreviewAsync();
+                IsPreviewing = false;
+                await MediaCapture.StopPreviewAsync();
             }
             catch (Exception ex)
             {
@@ -475,10 +462,11 @@ namespace Archery_Manager
             }
 
             // Use the dispatcher because this method is sometimes called from non-UI threads
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            await Window.Current.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 // Cleanup the UI
-                PreviewControl.Source = null;
+                // PreviewControl.Source = null;
+                MediaCapture = null;
 
                 // Allow the device screen to sleep now that the preview is stopped
                 _displayRequest.RequestRelease();
@@ -488,7 +476,7 @@ namespace Archery_Manager
         {
             Debug.WriteLine("CleanupCameraAsync");
 
-            if (_isInitialized)
+            if (IsInitialized)
             {
                 // If a recording is in progress during cleanup, stop it to save the recording
                 //if (_isRecording)
@@ -496,22 +484,22 @@ namespace Archery_Manager
                 //    await StopRecordingAsync();
                 //}
 
-                if (_isPreviewing)
+                if (IsPreviewing)
                 {
                     // The call to MediaCapture.Dispose() will automatically stop the preview
                     // but manually stopping the preview is good practice
                     await StopPreviewAsync();
                 }
 
-                _isInitialized = false;
+                IsInitialized = false;
             }
 
-            if (_mediaCapture != null)
+            if (MediaCapture != null)
             {
                 //_mediaCapture.RecordLimitationExceeded -= MediaCapture_RecordLimitationExceeded;
-                _mediaCapture.Failed -= MediaCapture_Failed;
-                _mediaCapture.Dispose();
-                _mediaCapture = null;
+                MediaCapture.Failed -= MediaCapture_Failed;
+                MediaCapture.Dispose();
+                MediaCapture = null;
             }
         }
         private async void MediaCapture_Failed(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
@@ -534,15 +522,14 @@ namespace Archery_Manager
             // Rotate the buttons in the UI to match the rotation of the device
             var transform = new RotateTransform { Angle = angle };
 
-            PhotoButton.RenderTransform = transform;
+            //PhotoButton.RenderTransform = transform;
         }
         private void UpdateCaptureControls()
         {
             // The buttons should only be enabled if the preview started sucessfully
-            PhotoButton.IsEnabled = _isPreviewing;
+            //PhotoButton.IsEnabled = _isPreviewing;
 
         }
-
+        #endregion Camera
     }
 }
-

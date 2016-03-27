@@ -17,5 +17,29 @@ namespace Archery_Manager.objets
             get;
             set;
         }
+        public bool RemoveArcher(Archer archer)
+        {
+            if(this.Archers==null)
+            {
+                return false;
+            }
+            else
+            {
+                this.Archers.Remove(archer);
+                return true;
+            }
+        }
+        public bool AddArcher(Archer archer)
+        {
+            if(this.Archers==null)
+            {
+                return false;
+            }
+            else
+            {
+                this.Archers.Add(archer);
+                return true;
+            }
+        }
     }
 }

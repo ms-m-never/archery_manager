@@ -5,16 +5,51 @@ using System.Xml.Serialization;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Archery_Manager.objets;
+using Archery_Manager.Bases;
 
 namespace Archery_Manager
 {
+    public class RessourceManager : NotifyPropertyChanged
+    {
+        private static object syncRoot = new object();
+        private static volatile RessourceManager instance;
+        public static RessourceManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    lock (syncRoot)
+                        if (instance == null)
+                            instance = new RessourceManager();
+                }
+                return instance;
+            }
+        }
+        private Club club;
+        public Club Club
+        {
+            get
+            {
+                return club;
+            }
+            set
+            {
+                if(club!=value)
+                {
+                    club = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+    }
     public static class ApplicationHelper
     {
-       public static objets.Club MyClub = new objets.Club();
-        
         public static Windows.Storage.ApplicationDataContainer LocalSettings { get { return Windows.Storage.ApplicationData.Current.LocalSettings; } }
         public static Windows.Storage.StorageFolder LocalFolder { get { return Windows.Storage.ApplicationData.Current.LocalFolder; } }
-        public static Frame RootFrame { get {  return Window.Current.Content as Frame; } }
+        public static Frame RootFrame { get { return Window.Current.Content as Frame; } }
+
         public static T DeSerializeXML<T>(string FileName) where T : class
         {
             T temp = null;
@@ -28,47 +63,16 @@ namespace Archery_Manager
                     if(serializer.CanDeserialize(reader))
                         temp = (T)serializer.Deserialize(reader);
                 }
-            }catch(Exception ex)
+            }catch(FileNotFoundException fnfEx)
+            {
+
+            }
+            catch (Exception ex)
             {
                 Message("Fichier de données introuvable.");
             }
             return temp;
         }
-
-
-        public static async void Message(string message)
-        {
-            var m = new MessageDialog(message);
-            await m.ShowAsync();
-        }
-
-    
-        public static async System.Threading.Tasks.Task<bool> MessageValid(string message)
-        {
-            var m = new MessageDialog(message);
-            m.Commands.Add(new UICommand("Valider") { Id = 1 });
-            m.Commands.Add(new UICommand("Annuler") { Id = 0 });
-            m.CancelCommandIndex = 0;
-            IUICommand result = await m.ShowAsync();
-            return (int)result.Id==1;
-        }
-
-       /* public async void MessageValid(string message)
-         {
-            var m = new MessageDialog(message);
-
-            // Add commands and set their callbacks; both buttons use the same callback function instead of inline event handlers
-            m.Commands.Add(new UICommand("Valider", new UICommandInvokedHandler()));
-            m.Commands.Add(new UICommand("Annuler", new UICommandInvokedHandler()));
-
-            m.DefaultCommandIndex = 0;
-
-            m.CancelCommandIndex = 1;
-
-            await m.ShowAsync();
-        }*/
-
-
 
         public static void SerializeXML<T>(string FileName, T objet) where T : class
         {
@@ -81,7 +85,7 @@ namespace Archery_Manager
                 settings.NewLineOnAttributes = true;
                 XmlSerializer serializer = new XmlSerializer(typeof(T));
                 FileStream fs = new FileStream(LocalFolder.Path + @"\" + FileName + ".xml", FileMode.Create);
-                using (XmlWriter writer = XmlWriter.Create(fs,settings))
+                using (XmlWriter writer = XmlWriter.Create(fs, settings))
                 {
                     serializer.Serialize(writer, objet);
                 }
@@ -91,5 +95,22 @@ namespace Archery_Manager
                 Message(ex.Message);
             }
         }
+
+        public static async void Message(string message)
+        {
+            var m = new MessageDialog(message);
+            await m.ShowAsync();
+        }
+    
+        public static async System.Threading.Tasks.Task<bool> MessageValid(string message)
+        {
+            var m = new MessageDialog(message);
+            m.Commands.Add(new UICommand("Valider") { Id = 1 });
+            m.Commands.Add(new UICommand("Annuler") { Id = 0 });
+            m.CancelCommandIndex = 0;
+            IUICommand result = await m.ShowAsync();
+            return (int)result.Id==1;
+        }
+
     }
 }

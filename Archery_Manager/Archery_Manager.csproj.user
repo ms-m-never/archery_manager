@@ -8,4 +8,7 @@
     <UseEmulator>true</UseEmulator>
     <AuthenticationMode>Windows</AuthenticationMode>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <UseSimulator>false</UseSimulator>
+  </PropertyGroup>
 </Project>
